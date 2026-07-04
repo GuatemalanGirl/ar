@@ -5,6 +5,9 @@ const els = {
   stage: $('stage'),
   reticle: $('reticle'),
   panel: $('panel'),
+  panelBody: $('panelBody'),
+  togglePanel: $('togglePanel'),
+  openPanel: $('openPanel'),
   status: $('status'),
   startCamera: $('startCamera'),
   capture: $('capture'),
@@ -47,6 +50,16 @@ const state = {
 
 function setStatus(message) {
   els.status.textContent = message;
+}
+
+function closePanel() {
+  els.panel.classList.add('panel-closed');
+  els.openPanel.classList.remove('hidden');
+}
+
+function openPanel() {
+  els.panel.classList.remove('panel-closed');
+  els.openPanel.classList.add('hidden');
 }
 
 function clamp(value, min, max) {
@@ -157,6 +170,7 @@ function togglePlaceMode() {
   els.placeMode.textContent = state.isPlaceMode ? '배치 위치 선택 중' : '벽에 배치';
   els.reticle.classList.toggle('hidden', !state.isPlaceMode);
   setStatus(state.isPlaceMode ? '벽 위치를 터치하세요' : '이미지 배치됨');
+  if (state.isPlaceMode) closePanel();
 }
 
 function placeItemAt(clientX, clientY) {
@@ -473,6 +487,8 @@ function bindEvents() {
   els.requestMotion.addEventListener('click', requestMotionPermission);
   els.reset.addEventListener('click', resetAll);
   els.capture.addEventListener('click', capturePreview);
+  els.togglePanel.addEventListener('click', closePanel);
+  els.openPanel.addEventListener('click', openPanel);
   els.stage.addEventListener('pointerdown', handleStagePointerDown);
 
   window.addEventListener('resize', () => {

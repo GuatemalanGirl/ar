@@ -258,3 +258,74 @@ button.primary,
     margin: 0;
   }
 }
+
+/* Settings panel UX patch: keep AR view clear on mobile */
+#stage { z-index: 1; }
+
+#panel {
+  z-index: 12;
+  max-height: min(58vh, 520px);
+  overflow: hidden;
+}
+
+.panel-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#panelBody {
+  max-height: min(calc(58vh - 54px), 460px);
+  overflow-y: auto;
+  padding-right: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.icon-button {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(255,255,255,.12);
+}
+
+.floating-settings {
+  position: fixed;
+  left: 12px;
+  bottom: calc(12px + var(--safe-bottom));
+  z-index: 13;
+  width: auto;
+  padding: 11px 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(17, 24, 39, 0.82);
+  color: var(--text);
+  box-shadow: 0 12px 34px rgba(0,0,0,.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+#panel.panel-closed {
+  display: none;
+}
+
+@media (max-width: 759px) {
+  #panel {
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + var(--safe-bottom));
+    padding: 10px;
+    border-radius: 16px;
+    max-height: min(50vh, 440px);
+  }
+
+  #panelBody {
+    max-height: min(calc(50vh - 50px), 380px);
+  }
+
+  .hint {
+    display: none;
+  }
+}

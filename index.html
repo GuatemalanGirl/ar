@@ -25,10 +25,14 @@
 
       <section id="panel" aria-label="controls">
         <div class="panel-header">
-          <strong>웹 AR 벽 배치 MVP</strong>
-          <span id="status">카메라 대기</span>
+          <div>
+            <strong>웹 AR 벽 배치 MVP</strong>
+            <span id="status">카메라 대기</span>
+          </div>
+          <button id="togglePanel" class="icon-button" type="button" aria-label="설정창 닫기">닫기</button>
         </div>
 
+        <div id="panelBody">
         <div class="row two">
           <button id="startCamera" type="button">카메라 시작</button>
           <button id="capture" type="button" disabled>캡처</button>
@@ -78,8 +82,10 @@
 
         <p id="motionReadout">센서: 미사용</p>
         <p class="hint">사용법: 카메라 시작 → 벽에 A4/기준물 부착 → 보정 박스를 기준물 너비에 맞춤 → 보정 완료 → 벽에 배치.</p>
+        </div>
       </section>
 
+      <button id="openPanel" class="floating-settings hidden" type="button">설정</button>
       <a id="downloadLink" class="hidden" download="wall-preview.png">캡처 다운로드</a>
     </main>
     <script src="./main.js"></script>
