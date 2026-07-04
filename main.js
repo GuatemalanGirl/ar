@@ -4,29 +4,20 @@ const els = {
   video: $('camera'),
   stage: $('stage'),
   reticle: $('reticle'),
-  panel: $('panel'),
-  panelBody: $('panelBody'),
-  togglePanel: $('togglePanel'),
-  openPanel: $('openPanel'),
   status: $('status'),
   startCamera: $('startCamera'),
-  capture: $('capture'),
+  pickImage: $('pickImage'),
   imageInput: $('imageInput'),
-  realWidth: $('realWidth'),
-  realHeight: $('realHeight'),
-  knownWidth: $('knownWidth'),
+  sizeButton: $('sizeButton'),
   startCalibration: $('startCalibration'),
   calibrationBox: $('calibrationBox'),
   calibrationLabel: $('calibrationLabel'),
-  calibrationStatus: $('calibrationStatus'),
   placeMode: $('placeMode'),
-  fitActual: $('fitActual'),
-  wallImage: $('wallImage'),
-  rotation: $('rotation'),
-  rotationValue: $('rotationValue'),
-  requestMotion: $('requestMotion'),
-  motionReadout: $('motionReadout'),
+  rotateLeft: $('rotateLeft'),
+  rotateRight: $('rotateRight'),
+  capture: $('capture'),
   reset: $('reset'),
+  wallImage: $('wallImage'),
   downloadLink: $('downloadLink'),
 };
 
@@ -36,6 +27,9 @@ const state = {
   pxPerMeter: null,
   isCalibrating: false,
   isPlaceMode: false,
+  realWidthCm: 60,
+  realHeightCm: 90,
+  knownWidthCm: 21,
   item: {
     x: window.innerWidth / 2,
     y: window.innerHeight * 0.44,
@@ -52,24 +46,8 @@ function setStatus(message) {
   els.status.textContent = message;
 }
 
-function closePanel() {
-  els.panel.classList.add('panel-closed');
-  els.openPanel.classList.remove('hidden');
-}
-
-function openPanel() {
-  els.panel.classList.remove('panel-closed');
-  els.openPanel.classList.add('hidden');
-}
-
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
-}
-
-function getMetersFromCmInput(input) {
-  const cm = Number.parseFloat(input.value);
-  if (!Number.isFinite(cm) || cm <= 0) return null;
-  return cm / 100;
 }
 
 function getStageRect() {
@@ -77,12 +55,8 @@ function getStageRect() {
 }
 
 function getActualImageSizePx() {
-  const widthM = getMetersFromCmInput(els.realWidth);
-  const heightM = getMetersFromCmInput(els.realHeight);
-
-  if (!widthM || !heightM) {
-    return { widthPx: 220, heightPx: 330 };
-  }
+  const widthM = state.realWidthCm / 100;
+  const heightM = state.realHeightCm / 100;
 
   if (state.pxPerMeter) {
     return {
@@ -91,7 +65,7 @@ function getActualImageSizePx() {
     };
   }
 
-  const fallbackWidth = clamp(window.innerWidth * 0.38, 160, 280);
+  const fallbackWidth = clamp(window.innerWidth * 0.38, 150, 280);
   return {
     widthPx: fallbackWidth,
     heightPx: fallbackWidth * (heightM / widthM),
@@ -115,39 +89,50 @@ function renderItem() {
   els.wallImage.style.transform = `translate(-50%, -50%) rotate(${item.rotationDeg}deg) scale(${item.scale})`;
 }
 
-function enablePlacementControls(enabled) {
+function enableImageControls(enabled) {
+  els.sizeButton.disabled = !enabled;
+  els.startCalibration.disabled = !enabled;
   els.placeMode.disabled = !enabled;
-  els.fitActual.disabled = !enabled;
-  els.capture.disabled = !enabled;
+  els.rotateLeft.disabled = !enabled;
+  els.rotateRight.disabled = !enabled;
+  els.capture.disabled = !enabled || !state.stream;
 }
 
 async function startCamera() {
   try {
     if (state.stream) return;
 
-    const constraints = {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert('이 브라우저는 카메라 API를 지원하지 않습니다. iPhone은 Safari, Android는 Chrome으로 열어주세요.');
+      return;
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: 'environment' },
         width: { ideal: 1920 },
         height: { ideal: 1080 },
       },
       audio: false,
-    };
+    });
 
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
     state.stream = stream;
     els.video.srcObject = stream;
     await els.video.play();
 
-    setStatus('카메라 실행 중');
-    els.startCamera.textContent = '카메라 실행됨';
+    setStatus('카메라 실행 중 · 이미지를 선택하세요');
+    els.startCamera.textContent = '실행중';
     els.startCamera.disabled = true;
     els.capture.disabled = !state.imageObjectUrl;
   } catch (error) {
     console.error(error);
     setStatus('카메라 권한 실패');
-    alert('카메라를 시작할 수 없습니다. HTTPS 또는 localhost에서 실행 중인지, 카메라 권한이 허용됐는지 확인하세요.');
+    alert('카메라를 시작할 수 없습니다. GitHub Pages HTTPS 주소인지, 브라우저 카메라 권한이 허용됐는지 확인하세요.');
   }
+}
+
+function pickImage() {
+  els.imageInput.click();
 }
 
 function handleImageInput(event) {
@@ -159,18 +144,42 @@ function handleImageInput(event) {
 
   els.wallImage.src = state.imageObjectUrl;
   els.wallImage.classList.remove('hidden');
-  enablePlacementControls(true);
+  enableImageControls(true);
   applyActualSizeToItem();
-  setStatus('이미지 준비 완료');
+  setStatus(`${state.realWidthCm}×${state.realHeightCm}cm · 드래그/핀치 가능`);
+}
+
+function editSize() {
+  const width = prompt('이미지 실제 가로(cm)를 입력하세요.', String(state.realWidthCm));
+  if (width === null) return;
+
+  const height = prompt('이미지 실제 세로(cm)를 입력하세요.', String(state.realHeightCm));
+  if (height === null) return;
+
+  const widthCm = Number.parseFloat(width);
+  const heightCm = Number.parseFloat(height);
+  if (!Number.isFinite(widthCm) || !Number.isFinite(heightCm) || widthCm <= 0 || heightCm <= 0) {
+    alert('가로/세로를 숫자로 입력해주세요. 예: 60, 90');
+    return;
+  }
+
+  state.realWidthCm = widthCm;
+  state.realHeightCm = heightCm;
+  applyActualSizeToItem();
+  setStatus(`${state.realWidthCm}×${state.realHeightCm}cm 적용`);
 }
 
 function togglePlaceMode() {
+  if (!state.imageObjectUrl) {
+    alert('먼저 이미지를 선택하세요.');
+    return;
+  }
+
   state.isPlaceMode = !state.isPlaceMode;
   els.placeMode.classList.toggle('active', state.isPlaceMode);
-  els.placeMode.textContent = state.isPlaceMode ? '배치 위치 선택 중' : '벽에 배치';
+  els.placeMode.textContent = state.isPlaceMode ? '터치' : '배치';
   els.reticle.classList.toggle('hidden', !state.isPlaceMode);
-  setStatus(state.isPlaceMode ? '벽 위치를 터치하세요' : '이미지 배치됨');
-  if (state.isPlaceMode) closePanel();
+  setStatus(state.isPlaceMode ? '벽의 원하는 위치를 터치하세요' : '이미지 배치 모드 종료');
 }
 
 function placeItemAt(clientX, clientY) {
@@ -180,41 +189,57 @@ function placeItemAt(clientX, clientY) {
   renderItem();
   state.isPlaceMode = false;
   els.placeMode.classList.remove('active');
-  els.placeMode.textContent = '벽에 배치';
+  els.placeMode.textContent = '배치';
   els.reticle.classList.add('hidden');
-  setStatus('이미지 배치 완료');
+  setStatus('이미지 배치 완료 · 이미지를 드래그/핀치하세요');
 }
 
-function startCalibration() {
-  state.isCalibrating = !state.isCalibrating;
-  els.calibrationBox.classList.toggle('hidden', !state.isCalibrating);
-  els.startCalibration.classList.toggle('active', state.isCalibrating);
+function toggleCalibration() {
+  if (!state.imageObjectUrl) {
+    alert('먼저 이미지를 선택하세요.');
+    return;
+  }
 
-  if (state.isCalibrating) {
-    els.startCalibration.textContent = '보정 완료';
+  if (!state.isCalibrating) {
+    const known = prompt('기준물의 실제 너비(cm)를 입력하세요. A4 짧은 변은 21cm입니다.', String(state.knownWidthCm));
+    if (known === null) return;
+
+    const knownCm = Number.parseFloat(known);
+    if (!Number.isFinite(knownCm) || knownCm <= 0) {
+      alert('기준물 너비를 숫자로 입력해주세요. 예: 21');
+      return;
+    }
+
+    state.knownWidthCm = knownCm;
+    state.isCalibrating = true;
+    els.calibrationBox.classList.remove('hidden');
+    els.startCalibration.classList.add('active');
+    els.startCalibration.textContent = '완료';
     updateCalibrationLabel();
-    setStatus('기준물에 박스 너비를 맞추세요');
+    setStatus('파란 박스를 기준물 너비에 맞춘 뒤 완료를 누르세요');
     return;
   }
 
-  const knownWidthM = getMetersFromCmInput(els.knownWidth);
-  if (!knownWidthM) {
-    alert('기준물 너비를 cm 단위로 입력하세요. 예: A4 세로 방향 너비 21cm');
-    return;
-  }
-
+  const knownWidthM = state.knownWidthCm / 100;
   const boxWidthPx = els.calibrationBox.getBoundingClientRect().width;
   state.pxPerMeter = boxWidthPx / knownWidthM;
-  els.calibrationStatus.textContent = `보정 완료: 1m ≈ ${Math.round(state.pxPerMeter)}px. 같은 거리의 벽에서 실제 크기가 맞습니다.`;
-  els.startCalibration.textContent = 'A4/기준물 보정';
-  setStatus('스케일 보정 완료');
+  state.isCalibrating = false;
+  els.calibrationBox.classList.add('hidden');
+  els.startCalibration.classList.remove('active');
+  els.startCalibration.textContent = '보정';
   applyActualSizeToItem();
+  setStatus(`보정 완료 · 1m ≈ ${Math.round(state.pxPerMeter)}px`);
 }
 
 function updateCalibrationLabel() {
   const boxWidthPx = Math.round(els.calibrationBox.getBoundingClientRect().width);
-  const knownCm = Number.parseFloat(els.knownWidth.value || '0');
-  els.calibrationLabel.textContent = `${knownCm || '?'}cm = ${boxWidthPx}px`;
+  els.calibrationLabel.textContent = `${state.knownWidthCm}cm = ${boxWidthPx}px`;
+}
+
+function rotateBy(deltaDeg) {
+  state.item.rotationDeg = clamp(state.item.rotationDeg + deltaDeg, -180, 180);
+  renderItem();
+  setStatus(`회전 ${Math.round(state.item.rotationDeg)}°`);
 }
 
 function setupCalibrationDrag() {
@@ -350,62 +375,38 @@ function getDistance(a, b) {
 }
 
 function handleStagePointerDown(event) {
-  if (els.panel.contains(event.target)) return;
   if (event.target === els.wallImage || els.calibrationBox.contains(event.target)) return;
   if (!state.isPlaceMode) return;
   placeItemAt(event.clientX, event.clientY);
 }
 
-function handleRotationInput() {
-  state.item.rotationDeg = Number.parseFloat(els.rotation.value) || 0;
-  els.rotationValue.textContent = `${state.item.rotationDeg}°`;
-  renderItem();
-}
-
-async function requestMotionPermission() {
-  try {
-    const anyDeviceOrientation = window.DeviceOrientationEvent;
-    if (anyDeviceOrientation && typeof anyDeviceOrientation.requestPermission === 'function') {
-      const permission = await anyDeviceOrientation.requestPermission();
-      if (permission !== 'granted') {
-        els.motionReadout.textContent = '센서: 권한 거부';
-        return;
-      }
-    }
-
-    window.addEventListener('deviceorientation', (event) => {
-      const beta = event.beta == null ? '-' : `${event.beta.toFixed(1)}°`;   // front/back tilt
-      const gamma = event.gamma == null ? '-' : `${event.gamma.toFixed(1)}°`; // left/right tilt
-      const alpha = event.alpha == null ? '-' : `${event.alpha.toFixed(1)}°`; // compass-like heading
-      els.motionReadout.textContent = `센서: alpha ${alpha}, beta ${beta}, gamma ${gamma}`;
-    }, true);
-
-    els.requestMotion.disabled = true;
-    els.requestMotion.textContent = '센서 허용됨';
-  } catch (error) {
-    console.error(error);
-    els.motionReadout.textContent = '센서: 사용할 수 없음';
-  }
-}
-
 function resetAll() {
   state.pxPerMeter = null;
+  state.isCalibrating = false;
+  state.isPlaceMode = false;
   state.item.x = window.innerWidth / 2;
   state.item.y = window.innerHeight * 0.44;
   state.item.rotationDeg = 0;
   state.item.scale = 1;
-  els.rotation.value = '0';
-  els.rotationValue.textContent = '0°';
-  els.calibrationStatus.textContent = '보정 전: 화면 기준 임시 크기로 표시됩니다.';
-  state.isPlaceMode = false;
+  els.calibrationBox.classList.add('hidden');
+  els.startCalibration.classList.remove('active');
+  els.startCalibration.textContent = '보정';
   els.placeMode.classList.remove('active');
+  els.placeMode.textContent = '배치';
   els.reticle.classList.add('hidden');
   applyActualSizeToItem();
-  setStatus(state.stream ? '카메라 실행 중' : '카메라 대기');
+  setStatus(state.stream ? '초기화 완료 · 카메라 실행 중' : '초기화 완료 · 카메라 대기');
 }
 
 async function capturePreview() {
-  if (!state.stream || !state.imageObjectUrl) return;
+  if (!state.stream) {
+    alert('먼저 카메라를 시작하세요.');
+    return;
+  }
+  if (!state.imageObjectUrl) {
+    alert('먼저 이미지를 선택하세요.');
+    return;
+  }
 
   const canvas = document.createElement('canvas');
   const width = window.innerWidth;
@@ -476,19 +477,15 @@ function drawPlacedImage(ctx) {
 
 function bindEvents() {
   els.startCamera.addEventListener('click', startCamera);
+  els.pickImage.addEventListener('click', pickImage);
   els.imageInput.addEventListener('change', handleImageInput);
-  els.startCalibration.addEventListener('click', startCalibration);
-  els.knownWidth.addEventListener('input', updateCalibrationLabel);
+  els.sizeButton.addEventListener('click', editSize);
+  els.startCalibration.addEventListener('click', toggleCalibration);
   els.placeMode.addEventListener('click', togglePlaceMode);
-  els.fitActual.addEventListener('click', applyActualSizeToItem);
-  els.realWidth.addEventListener('input', applyActualSizeToItem);
-  els.realHeight.addEventListener('input', applyActualSizeToItem);
-  els.rotation.addEventListener('input', handleRotationInput);
-  els.requestMotion.addEventListener('click', requestMotionPermission);
-  els.reset.addEventListener('click', resetAll);
+  els.rotateLeft.addEventListener('click', () => rotateBy(-5));
+  els.rotateRight.addEventListener('click', () => rotateBy(5));
   els.capture.addEventListener('click', capturePreview);
-  els.togglePanel.addEventListener('click', closePanel);
-  els.openPanel.addEventListener('click', openPanel);
+  els.reset.addEventListener('click', resetAll);
   els.stage.addEventListener('pointerdown', handleStagePointerDown);
 
   window.addEventListener('resize', () => {
@@ -502,4 +499,4 @@ bindEvents();
 setupCalibrationDrag();
 setupItemGestures();
 renderItem();
-setStatus('카메라 대기');
+setStatus('카메라를 누른 뒤 이미지를 선택하세요');

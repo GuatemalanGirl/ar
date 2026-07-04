@@ -1,10 +1,8 @@
-# Web AR Wall MVP - GitHub Pages Static Version
+# Web AR Wall MVP - Fullscreen Static Version
 
-앱 설치 없이 iOS Safari / Android Chrome에서 실행 가능한 정적 웹 MVP입니다.
+앱 설치 없이 GitHub Pages에서 바로 테스트하는 정적 웹 MVP입니다.
 
-이 버전은 `npm install`, Vite, 빌드 과정이 필요 없습니다. 파일을 GitHub 저장소에 그대로 올리고 GitHub Pages를 켜면 바로 테스트할 수 있습니다.
-
-## 포함 파일
+## 파일 구성
 
 ```text
 index.html
@@ -14,40 +12,34 @@ main.js
 README.md
 ```
 
-## GitHub Pages 배포 방법
+설치, npm, build가 필요 없습니다.
 
-1. 새 GitHub repository를 만듭니다.
-2. 이 폴더 안의 파일들을 repo 루트에 업로드합니다.
-3. GitHub repo에서 `Settings` → `Pages`로 이동합니다.
-4. `Build and deployment`에서 `Deploy from a branch`를 선택합니다.
-5. Branch는 `main`, folder는 `/root`를 선택합니다.
-6. 저장 후 표시되는 `https://사용자명.github.io/레포명/` 주소로 접속합니다.
+## GitHub Pages 배포
 
-## 사용 흐름
+1. 이 폴더 안의 파일들을 GitHub repository 루트에 업로드합니다.
+2. GitHub repository에서 `Settings > Pages`로 이동합니다.
+3. `Deploy from a branch`를 선택합니다.
+4. Branch는 `main`, Folder는 `/root`로 설정합니다.
+5. 배포 주소로 접속합니다.
 
-1. iPhone Safari 또는 Android Chrome에서 GitHub Pages 주소 접속
-2. `카메라 시작`
-3. `이미지 선택`
-4. 실제 가로/세로 cm 입력
-5. 벽에 A4 또는 기준물을 붙임
-6. 기준물 너비 입력. A4 짧은 변은 21cm
-7. `A4/기준물 보정` 클릭
-8. 파란 박스 너비를 화면 속 기준물 너비와 맞춤
-9. `보정 완료`
-10. `벽에 배치` 클릭 후 원하는 위치 터치
-11. 드래그/핀치/회전 조정
-12. `캡처`
+일반 repository 주소 형식:
 
-## 주의
+```text
+https://깃허브아이디.github.io/레포명/
+```
 
-- GitHub Pages는 HTTPS라서 모바일 카메라 테스트에 적합합니다.
-- 로컬에서 `file://`로 직접 열면 카메라 권한이 막힐 수 있습니다.
-- 이 MVP는 iOS 웹 호환을 위해 WebXR이 아니라 `카메라 + 화면 오버레이 + 기준물 보정` 방식입니다.
-- 실제 AR anchor처럼 카메라 이동 시 벽에 완전히 고정되는 기능은 WebAR SDK 연결 단계에서 추가해야 합니다.
+## 사용법
 
-## 2026-07-04 UI 패치
+1. `카메라` 버튼을 누릅니다.
+2. `이미지` 버튼으로 벽에 올릴 이미지를 선택합니다.
+3. 필요하면 `크기` 버튼으로 실제 가로/세로 cm를 입력합니다. 기본값은 60 × 90cm입니다.
+4. 정확한 크기 보정이 필요하면 `보정` 버튼을 누르고, A4 같은 기준물 너비를 입력합니다.
+5. 파란 박스를 기준물 너비에 맞춘 뒤 `완료`를 누릅니다.
+6. `배치` 버튼을 누르고 벽의 원하는 위치를 터치합니다.
+7. 이미지를 드래그하거나 두 손가락 핀치로 크기를 조정합니다.
+8. `↺`, `↻` 버튼으로 회전합니다.
+9. `캡처` 버튼으로 결과 이미지를 저장합니다.
 
-- 설정창에 `닫기` 버튼을 추가했습니다.
-- 설정창을 닫으면 화면 왼쪽 아래에 작은 `설정` 버튼만 남습니다.
-- `벽에 배치`를 누르면 설정창이 자동으로 닫혀 카메라 화면을 가리지 않습니다.
-- 모바일에서는 설정창 높이를 화면의 절반 이하로 제한하고 내부 스크롤로 조작합니다.
+## 현재 MVP의 한계
+
+이 버전은 iOS/Android 브라우저에서 바로 동작하는 보정형 MVP입니다. 네이티브 ARKit/WebXR처럼 실제 벽 plane anchor에 고정하는 방식은 아닙니다. 앱 없이 웹만으로 iOS까지 지원하기 위한 초기 검증용 버전입니다.
