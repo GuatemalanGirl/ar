@@ -4,6 +4,7 @@
   --text: #f9fafb;
   --muted: #cbd5e1;
   --accent: #38bdf8;
+  --danger: #fb7185;
 }
 
 * { box-sizing: border-box; }
@@ -19,6 +20,8 @@ body,
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #camera,
@@ -38,26 +41,27 @@ body,
 #stage {
   pointer-events: auto;
   overflow: hidden;
+  perspective: 1200px;
 }
 
 .hidden { display: none !important; }
 
 #topHud {
   position: fixed;
-  z-index: 30;
+  z-index: 40;
   left: 50%;
   top: calc(10px + var(--safe-top));
   transform: translateX(-50%);
-  max-width: min(92vw, 520px);
+  max-width: min(94vw, 720px);
   padding: 8px 12px;
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 999px;
-  background: rgba(2,6,23,.52);
+  background: rgba(2,6,23,.58);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 10px 28px rgba(0,0,0,.25);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -66,7 +70,7 @@ body,
 
 #toolbar {
   position: fixed;
-  z-index: 30;
+  z-index: 40;
   left: 0;
   right: 0;
   bottom: calc(10px + var(--safe-bottom));
@@ -85,12 +89,12 @@ body,
 button {
   border: 1px solid rgba(255,255,255,.18);
   border-radius: 999px;
-  background: rgba(2,6,23,.58);
+  background: rgba(2,6,23,.62);
   color: var(--text);
   font: inherit;
-  font-weight: 800;
+  font-weight: 900;
   padding: 11px 14px;
-  min-width: 64px;
+  min-width: 58px;
   min-height: 44px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -104,16 +108,14 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button.active,
-#startCalibration.active,
-#placeMode.active {
-  border-color: rgba(56,189,248,.72);
-  background: rgba(14,165,233,.42);
+button.active {
+  border-color: rgba(56,189,248,.78);
+  background: rgba(14,165,233,.46);
 }
 
 #reticle {
   position: absolute;
-  z-index: 10;
+  z-index: 20;
   left: 50%;
   top: 46%;
   transform: translate(-50%, -50%);
@@ -133,85 +135,89 @@ button.active,
 
 .wall-image {
   position: absolute;
-  z-index: 12;
-  left: 50%;
-  top: 45%;
-  width: 220px;
+  z-index: 18;
+  left: 0;
+  top: 0;
+  width: 400px;
   height: auto;
-  transform: translate(-50%, -50%);
-  transform-origin: 50% 50%;
+  transform-origin: 0 0;
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
   filter: drop-shadow(0 16px 22px rgba(0,0,0,.35));
   outline: 2px solid rgba(255,255,255,.28);
   background: rgba(255,255,255,.08);
+  will-change: transform;
 }
 
-#calibrationBox {
+.overlay-svg {
   position: absolute;
-  z-index: 15;
-  left: 18vw;
-  top: 38vh;
-  width: 44vw;
-  min-width: 80px;
-  height: 88px;
-  border: 2px dashed var(--accent);
-  border-radius: 12px;
-  background: rgba(14, 165, 233, 0.08);
-  touch-action: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  text-shadow: 0 1px 8px rgba(0,0,0,.6);
+  z-index: 14;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
-#calibrationBox::before,
-#calibrationBox::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  margin-top: -7px;
-  border-radius: 50%;
-  background: var(--accent);
+#planePolygon {
+  fill: rgba(56,189,248,.08);
+  stroke: none;
 }
 
-#calibrationBox::before { left: -7px; }
-#calibrationBox::after { right: -7px; }
+#planePolyline {
+  fill: none;
+  stroke: rgba(56,189,248,.96);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 8 7;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.55));
+}
 
-#calibrationLabel {
-  padding: 6px 10px;
-  border-radius: 999px;
+.plane-point {
+  fill: #38bdf8;
+  stroke: #fff;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 7px rgba(0,0,0,.75));
+}
+
+.plane-point-label {
+  fill: white;
+  font-size: 13px;
+  font-weight: 900;
+  paint-order: stroke;
+  stroke: rgba(2,6,23,.78);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+#hintBadge {
+  position: fixed;
+  z-index: 45;
+  left: 50%;
+  bottom: calc(68px + var(--safe-bottom));
+  transform: translateX(-50%);
+  max-width: min(92vw, 520px);
+  padding: 10px 13px;
+  border-radius: 16px;
   background: rgba(2,6,23,.72);
+  border: 1px solid rgba(255,255,255,.14);
+  color: white;
   font-size: 13px;
   font-weight: 800;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 16px 32px rgba(0,0,0,.3);
+  pointer-events: none;
 }
-
-.handle {
-  position: absolute;
-  top: 0;
-  width: 38px;
-  height: 100%;
-  min-width: 38px;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-  cursor: ew-resize;
-  touch-action: none;
-}
-.handle.left { left: -19px; }
-.handle.right { right: -19px; }
 
 #downloadLink {
   position: fixed;
   left: 50%;
   top: calc(54px + var(--safe-top));
   transform: translateX(-50%);
-  z-index: 40;
+  z-index: 50;
   padding: 10px 14px;
   border-radius: 999px;
   background: var(--accent);

@@ -1,8 +1,49 @@
-# Web AR Wall MVP - Fullscreen Static Version
+# Web AR Wall Plane MVP - GitHub Pages 정적 버전
 
-앱 설치 없이 GitHub Pages에서 바로 테스트하는 정적 웹 MVP입니다.
+앱 설치 없이 iOS Safari / Android Chrome에서 테스트할 수 있는 정적 웹 MVP입니다.
 
-## 파일 구성
+## 사용 방법
+
+1. 이 폴더의 파일을 GitHub repo 루트에 업로드합니다.
+2. GitHub Settings → Pages → Deploy from a branch → main / root 로 설정합니다.
+3. Pages URL을 모바일 브라우저에서 엽니다.
+4. 순서대로 진행합니다.
+
+```text
+카메라 → 이미지 → 크기 → 벽면 → 배치
+```
+
+## 벽면 보정 방식
+
+이 버전은 자동 SLAM/WebXR plane detection이 아닙니다. iOS 웹만으로 동작해야 하므로, 사용자가 직접 벽에 붙인 기준 사각형의 네 모서리를 찍어 homography를 계산합니다.
+
+추천 기준물:
+
+- A4 용지: 21cm × 29.7cm
+- 정사각 QR/마커: 예: 10cm × 10cm
+- 실제 크기를 알고 있는 액자/포스터/타일
+
+모서리 입력 순서:
+
+```text
+좌상 → 우상 → 우하 → 좌하
+```
+
+4점을 찍으면 앱이 다음을 계산합니다.
+
+- 벽면 원근 보정
+- 벽면 내 좌표계
+- 실제 cm 기준 이미지 크기
+- 화면상 기울기
+- 카메라 intrinsics를 60도 FOV로 가정한 대략적인 벽면 각도
+
+## 한계
+
+- iOS Safari는 WebXR plane detection을 직접 제공하지 않으므로 완전 자동 벽 인식은 아닙니다.
+- 카메라 내부 파라미터가 웹에서 정확히 제공되지 않아 벽면 각도는 근사값입니다.
+- 기준 사각형을 크게 찍을수록 정확도가 좋아집니다.
+
+## 파일 구조
 
 ```text
 index.html
@@ -11,35 +52,3 @@ main.js
 .nojekyll
 README.md
 ```
-
-설치, npm, build가 필요 없습니다.
-
-## GitHub Pages 배포
-
-1. 이 폴더 안의 파일들을 GitHub repository 루트에 업로드합니다.
-2. GitHub repository에서 `Settings > Pages`로 이동합니다.
-3. `Deploy from a branch`를 선택합니다.
-4. Branch는 `main`, Folder는 `/root`로 설정합니다.
-5. 배포 주소로 접속합니다.
-
-일반 repository 주소 형식:
-
-```text
-https://깃허브아이디.github.io/레포명/
-```
-
-## 사용법
-
-1. `카메라` 버튼을 누릅니다.
-2. `이미지` 버튼으로 벽에 올릴 이미지를 선택합니다.
-3. 필요하면 `크기` 버튼으로 실제 가로/세로 cm를 입력합니다. 기본값은 60 × 90cm입니다.
-4. 정확한 크기 보정이 필요하면 `보정` 버튼을 누르고, A4 같은 기준물 너비를 입력합니다.
-5. 파란 박스를 기준물 너비에 맞춘 뒤 `완료`를 누릅니다.
-6. `배치` 버튼을 누르고 벽의 원하는 위치를 터치합니다.
-7. 이미지를 드래그하거나 두 손가락 핀치로 크기를 조정합니다.
-8. `↺`, `↻` 버튼으로 회전합니다.
-9. `캡처` 버튼으로 결과 이미지를 저장합니다.
-
-## 현재 MVP의 한계
-
-이 버전은 iOS/Android 브라우저에서 바로 동작하는 보정형 MVP입니다. 네이티브 ARKit/WebXR처럼 실제 벽 plane anchor에 고정하는 방식은 아닙니다. 앱 없이 웹만으로 iOS까지 지원하기 위한 초기 검증용 버전입니다.

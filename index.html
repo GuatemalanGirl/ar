@@ -4,23 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#050507" />
-    <title>Web AR Wall MVP</title>
-    <link rel="stylesheet" href="./style.css?v=fullscreen-1" />
+    <title>Web AR Wall Plane MVP</title>
+    <link rel="stylesheet" href="./style.css?v=plane-1" />
   </head>
   <body>
     <main id="app">
       <video id="camera" autoplay muted playsinline></video>
 
       <section id="stage" aria-label="AR overlay area">
+        <svg id="planeSvg" class="overlay-svg" aria-hidden="true">
+          <polygon id="planePolygon" points="" />
+          <polyline id="planePolyline" points="" />
+          <g id="planePointLayer"></g>
+        </svg>
+
         <div id="reticle" class="hidden">+</div>
-
-        <div id="calibrationBox" class="hidden" aria-label="calibration rectangle">
-          <button class="handle left" type="button" aria-label="left resize handle"></button>
-          <span id="calibrationLabel">기준 너비</span>
-          <button class="handle right" type="button" aria-label="right resize handle"></button>
-        </div>
-
         <img id="wallImage" class="wall-image hidden" alt="wall preview" draggable="false" />
+        <div id="hintBadge" class="hidden"></div>
       </section>
 
       <div id="topHud" aria-live="polite">
@@ -31,10 +31,12 @@
         <button id="startCamera" type="button">카메라</button>
         <button id="pickImage" type="button">이미지</button>
         <button id="sizeButton" type="button" disabled>크기</button>
-        <button id="startCalibration" type="button" disabled>보정</button>
+        <button id="planeButton" type="button" disabled>벽면</button>
         <button id="placeMode" type="button" disabled>배치</button>
         <button id="rotateLeft" type="button" disabled>↺</button>
         <button id="rotateRight" type="button" disabled>↻</button>
+        <button id="scaleDown" type="button" disabled>-</button>
+        <button id="scaleUp" type="button" disabled>+</button>
         <button id="capture" type="button" disabled>캡처</button>
         <button id="reset" type="button">초기화</button>
       </nav>
@@ -42,6 +44,6 @@
       <input id="imageInput" class="hidden" type="file" accept="image/*" />
       <a id="downloadLink" class="hidden" download="wall-preview.png">캡처 다운로드</a>
     </main>
-    <script src="./main.js?v=fullscreen-1"></script>
+    <script src="./main.js?v=plane-1"></script>
   </body>
 </html>
