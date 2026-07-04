@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#111827" />
+    <title>Web AR Wall MVP</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <video id="camera" autoplay muted playsinline></video>
+
+      <section id="stage" aria-label="AR overlay area">
+        <div id="reticle" class="hidden">+</div>
+
+        <div id="calibrationBox" class="hidden" aria-label="calibration rectangle">
+          <button class="handle left" type="button" aria-label="left resize handle"></button>
+          <span id="calibrationLabel">기준 너비</span>
+          <button class="handle right" type="button" aria-label="right resize handle"></button>
+        </div>
+
+        <img id="wallImage" class="wall-image hidden" alt="wall preview" draggable="false" />
+      </section>
+
+      <section id="panel" aria-label="controls">
+        <div class="panel-header">
+          <strong>웹 AR 벽 배치 MVP</strong>
+          <span id="status">카메라 대기</span>
+        </div>
+
+        <div class="row two">
+          <button id="startCamera" type="button">카메라 시작</button>
+          <button id="capture" type="button" disabled>캡처</button>
+        </div>
+
+        <label class="field">
+          <span>이미지 선택</span>
+          <input id="imageInput" type="file" accept="image/*" />
+        </label>
+
+        <div class="row two compact">
+          <label class="field">
+            <span>실제 가로(cm)</span>
+            <input id="realWidth" type="number" min="1" step="0.1" value="60" />
+          </label>
+          <label class="field">
+            <span>실제 세로(cm)</span>
+            <input id="realHeight" type="number" min="1" step="0.1" value="90" />
+          </label>
+        </div>
+
+        <div class="calibrate-card">
+          <div class="row two compact">
+            <label class="field">
+              <span>기준물 너비(cm)</span>
+              <input id="knownWidth" type="number" min="1" step="0.1" value="21" />
+            </label>
+            <button id="startCalibration" type="button">A4/기준물 보정</button>
+          </div>
+          <p id="calibrationStatus">보정 전: 화면 기준 임시 크기로 표시됩니다.</p>
+        </div>
+
+        <div class="row two">
+          <button id="placeMode" type="button" disabled>벽에 배치</button>
+          <button id="fitActual" type="button" disabled>실제 크기 재적용</button>
+        </div>
+
+        <label class="field">
+          <span>회전: <output id="rotationValue">0°</output></span>
+          <input id="rotation" type="range" min="-45" max="45" step="0.5" value="0" />
+        </label>
+
+        <div class="row two">
+          <button id="requestMotion" type="button">기울기 센서 허용</button>
+          <button id="reset" type="button">초기화</button>
+        </div>
+
+        <p id="motionReadout">센서: 미사용</p>
+        <p class="hint">사용법: 카메라 시작 → 벽에 A4/기준물 부착 → 보정 박스를 기준물 너비에 맞춤 → 보정 완료 → 벽에 배치.</p>
+      </section>
+
+      <a id="downloadLink" class="hidden" download="wall-preview.png">캡처 다운로드</a>
+    </main>
+    <script src="./main.js"></script>
+  </body>
+</html>

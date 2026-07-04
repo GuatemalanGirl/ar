@@ -1,0 +1,260 @@
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --panel-bg: rgba(17, 24, 39, 0.84);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --text: #f9fafb;
+  --muted: #cbd5e1;
+  --accent: #38bdf8;
+  --danger: #f87171;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #050507;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  touch-action: none;
+}
+
+#camera,
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+#camera {
+  object-fit: cover;
+  background: #111827;
+  transform: translateZ(0);
+}
+
+#stage {
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+#reticle {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  width: 54px;
+  height: 54px;
+  border: 2px solid rgba(255,255,255,.88);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 28px;
+  line-height: 1;
+  background: rgba(2,6,23,.18);
+  backdrop-filter: blur(4px);
+}
+
+.wall-image {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 220px;
+  height: auto;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  filter: drop-shadow(0 16px 22px rgba(0,0,0,.35));
+  outline: 2px solid rgba(255,255,255,.28);
+  background: rgba(255,255,255,.08);
+}
+
+#calibrationBox {
+  position: absolute;
+  left: 20vw;
+  top: 38vh;
+  width: 42vw;
+  min-width: 80px;
+  height: 88px;
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  background: rgba(14, 165, 233, 0.08);
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-shadow: 0 1px 8px rgba(0,0,0,.6);
+}
+
+#calibrationBox::before,
+#calibrationBox::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+#calibrationBox::before { left: -7px; }
+#calibrationBox::after { right: -7px; }
+
+#calibrationLabel {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(2,6,23,.7);
+  font-size: 13px;
+}
+
+.handle {
+  position: absolute;
+  top: 0;
+  width: 34px;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.handle.left { left: -17px; }
+.handle.right { right: -17px; }
+
+#panel {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + var(--safe-bottom));
+  max-width: 740px;
+  margin-inline: auto;
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  background: var(--panel-bg);
+  box-shadow: 0 18px 50px rgba(0,0,0,.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.panel-header,
+.row,
+.field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.panel-header {
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+#status {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.row { margin-top: 8px; }
+.row.two > * { flex: 1; }
+.compact { gap: 8px; }
+
+.field {
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 8px;
+  min-width: 0;
+}
+
+.field span,
+.hint,
+#calibrationStatus,
+#motionReadout {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+input[type="file"],
+input[type="number"],
+input[type="range"],
+button {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.13);
+  background: rgba(255,255,255,.09);
+  color: var(--text);
+  font: inherit;
+}
+
+input[type="file"],
+input[type="number"] { padding: 9px 10px; }
+input[type="range"] { accent-color: var(--accent); }
+
+button {
+  padding: 10px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+button.primary,
+#placeMode.active,
+#startCalibration.active {
+  border-color: rgba(56,189,248,.55);
+  background: rgba(14,165,233,.28);
+}
+
+.calibrate-card {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.06);
+}
+
+#calibrationStatus,
+#motionReadout,
+.hint {
+  margin: 7px 0 0;
+  line-height: 1.35;
+}
+
+#downloadLink {
+  position: fixed;
+  left: 50%;
+  top: calc(16px + var(--safe-top));
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #082f49;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+@media (min-width: 760px) {
+  #panel {
+    left: 24px;
+    right: auto;
+    bottom: 24px;
+    width: 420px;
+    margin: 0;
+  }
+}
