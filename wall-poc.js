@@ -19,6 +19,8 @@ const getSelectedProduct = () => {
 
 const createBorder = (entity, product) => {
   const parent = $('posterBorder')
+  if (!parent || !entity || !product) return
+
   parent.innerHTML = ''
 
   const thickness = 0.012
@@ -60,9 +62,11 @@ const cameraWorld = (cameraEl) => {
   const pos = new THREE.Vector3()
   const quat = new THREE.Quaternion()
   const dir = new THREE.Vector3()
+
   cameraEl.object3D.getWorldPosition(pos)
   cameraEl.object3D.getWorldQuaternion(quat)
   cameraEl.object3D.getWorldDirection(dir)
+
   return {pos, quat, dir}
 }
 
@@ -83,6 +87,7 @@ AFRAME.registerComponent('wall-poc-controller', {
     this.posterEl = $('posterPlane')
     this.borderEl = $('posterBorder')
     this.product = getSelectedProduct()
+
     this.frameCount = 0
     this.ready = false
     this.placed = false
@@ -95,29 +100,51 @@ AFRAME.registerComponent('wall-poc-controller', {
 
     this.el.addEventListener('realityready', () => {
       this.ready = true
-      setStatus('트래킹 시작됨. 벽을 비추고 천천히 움직이세요.')
+      this.frameCount = 0
+      setStatus('트래킹 시작됨. 벽을 정면으로 비춘 뒤 천천히 움직이세요.')
+    })
+
+    this.el.addEventListener('xrtrackingstatus', (event) => {
+      console.log('xrtrackingstatus:', event.detail)
     })
 
     this.el.addEventListener('realityerror', (event) => {
+      console.error('realityerror:', event.detail)
       setStatus(`8th Wall 오류: ${event.detail?.error || '알 수 없음'}`)
     })
 
     document.addEventListener('productchange', (event) => {
       this.product = getProductById(event.detail.productId)
       applyProduct(this.product)
+
       this.placed = false
       this.frameCount = 0
+
       if (this.posterEl) this.posterEl.setAttribute('visible', 'false')
       if (this.borderEl) this.borderEl.setAttribute('visible', 'false')
-      setStatus(`${this.product.name} 선택됨. 다시 자동 배치 중...`)
+
+      if (!this.ready) {
+        setStatus(`${this.product.name} 선택됨. 트래킹 시작을 기다리는 중...`)
+        return
+      }
+
+      setStatus(`${this.product.name} 선택됨. 다시 후보 위치 계산 중...`)
     })
 
     $('recenter')?.addEventListener('click', () => {
       this.placed = false
       this.frameCount = 0
+
       if (window.XR8?.recenter) window.XR8.recenter()
+
       if (this.posterEl) this.posterEl.setAttribute('visible', 'false')
       if (this.borderEl) this.borderEl.setAttribute('visible', 'false')
+
+      if (!this.ready) {
+        setStatus('카메라/SLAM 초기화 중... 트래킹 시작을 기다리는 중')
+        return
+      }
+
       setStatus('재계산 중... 벽을 정면으로 비추세요.')
     })
 
@@ -135,21 +162,31 @@ AFRAME.registerComponent('wall-poc-controller', {
         console.warn('XR8 configure skipped:', err)
       }
     }
-    window.XR8 ? configure() : window.addEventListener('xrloaded', configure)
+
+    if (window.XR8) {
+      configure()
+    } else {
+      window.addEventListener('xrloaded', configure)
+    }
   },
 
   tick() {
     if (!this.cameraEl || !this.posterEl) return
 
     const cam = cameraWorld(this.cameraEl)
+
     if (this.lastCamPos) {
       this.motionScore = cam.pos.distanceTo(this.lastCamPos)
     }
+
     this.lastCamPos = cam.pos.clone()
 
-    if (!this.ready && this.frameCount < 20) {
-      // AFrame + XR8 sometimes has a short delay before realityready.
-      setStatus('카메라/SLAM 초기화 중...')
+    // 중요:
+    // realityready가 오기 전에는 자동 배치를 절대 하지 않는다.
+    // 기존 코드는 ready가 false여도 30프레임 후 placeEstimatedWall()이 실행될 수 있었다.
+    if (!this.ready) {
+      setStatus('카메라/SLAM 초기화 중... 카메라 권한과 트래킹 시작을 기다리는 중')
+      return
     }
 
     if (this.placed) {
@@ -158,9 +195,11 @@ AFRAME.registerComponent('wall-poc-controller', {
     }
 
     this.frameCount += 1
+
     const stableEnough = this.frameCount > this.data.stabilizeFrames
     if (!stableEnough) {
-      setStatus(`공간 스캔 중... ${Math.min(100, Math.round((this.frameCount / this.data.stabilizeFrames) * 100))}%`)
+      const percent = Math.min(100, Math.round((this.frameCount / this.data.stabilizeFrames) * 100))
+      setStatus(`공간 스캔 중... ${percent}%`)
       return
     }
 
@@ -184,6 +223,7 @@ AFRAME.registerComponent('wall-poc-controller', {
     this.posterEl.object3D.rotateY(Math.PI)
 
     this.posterEl.setAttribute('visible', 'true')
+
     if (this.borderEl) {
       this.borderEl.object3D.position.copy(this.posterEl.object3D.position)
       this.borderEl.object3D.quaternion.copy(this.posterEl.object3D.quaternion)
@@ -193,13 +233,17 @@ AFRAME.registerComponent('wall-poc-controller', {
 
     this.wallAngleDeg = THREE.MathUtils.radToDeg(Math.atan2(forward.x, -forward.z))
     this.placed = true
+
     this.updateDiagnostics(cam)
   },
 
   updateDiagnostics(cam) {
     const dist = cam.pos.distanceTo(this.posterEl.object3D.position)
     const productName = this.product?.name || 'image'
-    setStatus(`${productName} | 추정거리 ${dist.toFixed(2)}m | 벽 후보각 ${this.wallAngleDeg.toFixed(0)}° | 자동배치`)
+
+    setStatus(
+      `${productName} | 추정거리 ${dist.toFixed(2)}m | 벽 후보각 ${this.wallAngleDeg.toFixed(0)}° | 후보 배치됨`
+    )
   },
 })
 
@@ -208,7 +252,14 @@ window.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       document.querySelectorAll('.product').forEach((b) => b.classList.remove('selected'))
       button.classList.add('selected')
-      document.dispatchEvent(new CustomEvent('productchange', {detail: {productId: button.dataset.productId}}))
+
+      document.dispatchEvent(
+        new CustomEvent('productchange', {
+          detail: {
+            productId: button.dataset.productId,
+          },
+        })
+      )
     })
   })
 
@@ -218,7 +269,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('error', (event) => {
     const message = event?.message || ''
+
     if (/XR8|xrextras|landing|aframe/i.test(message)) {
+      console.error('script error:', event)
       setStatus(`스크립트 오류: ${message}`)
     }
   })
